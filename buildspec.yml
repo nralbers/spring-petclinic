@@ -9,5 +9,5 @@ phases:
       - mvn package
 artifacts:
   files:
-    - target/petclinic.war
+    - target/spring-petclinic-2.0.0
   discard-paths: yes
