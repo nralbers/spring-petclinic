@@ -10,4 +10,4 @@ phases:
 artifacts:
   files:
     - '**/*'
-  base-directory: 'target/spring-petclinic'
+  base-directory: 'target/spring-petclinic-2.0.0'
