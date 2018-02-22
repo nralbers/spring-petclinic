@@ -120,7 +120,7 @@
       <groupId>com.newrelic.agent.java</groupId>
       <artifactId>newrelic-agent</artifactId>
       <version>3.47.0</version>
-      <scope>provided</scope>
+      <scope>runtime</scope>
     </dependency>
     
     <!-- The newrelic-api.jar dependency. -->
