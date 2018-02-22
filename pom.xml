@@ -219,7 +219,7 @@
           <failOnMissingWebXml>false</failOnMissingWebXml>
           <webResources>
                 <resource>
-                  <directory>src/main/aws/ebextensions</directory>
+                  <directory>src/aws/ebextensions</directory>
                     <targetPath>.ebextensions</targetPath>
                     <filtering>true</filtering>
                 </resource>
