@@ -115,11 +115,20 @@
       <scope>runtime</scope>
     </dependency>
 
+    <!-- The newrelic.jar dependency. -->
     <dependency>
       <groupId>com.newrelic.agent.java</groupId>
       <artifactId>newrelic-agent</artifactId>
       <version>3.47.0</version>
       <scope>provided</scope>
+    </dependency>
+    
+    <!-- The newrelic-api.jar dependency. -->
+    <dependency>
+      <groupId>com.newrelic.agent.java</groupId>
+      <artifactId>newrelic-api</artifactId>
+      <version>3.47.0</version>
+      <scope>compile</scope>
     </dependency>
   </dependencies>
 
@@ -214,7 +223,6 @@
       </plugin>
       <plugin>
         <artifactId>maven-war-plugin</artifactId>
-        <version>2.6</version>
         <configuration>
           <failOnMissingWebXml>false</failOnMissingWebXml>
           <webResources>
@@ -225,23 +233,6 @@
                 </resource>
             </webResources>
         </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <version>2.9</version>
-        <executions>
-          <execution>
-            <phase>prepare-package</phase>
-            <goals>
-               <goal>unpack-dependencies</goal>
-            </goals>
-            <configuration>
-              <includeArtifactIds>newrelic-agent</includeArtifactIds>
-              <outputDirectory>${project.build.outputDirectory}</outputDirectory>
-            </configuration>
-          </execution>
-        </executions>
       </plugin>
     </plugins>
   </build>
