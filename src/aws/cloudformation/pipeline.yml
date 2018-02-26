@@ -1,0 +1,163 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: "Creates codepipeline, codebuild and elasticbeanstalk resources"
+
+Parameters:
+  GithubOauthToken:
+    Type: String
+    Description: Github account token
+  GhostInspectorClientToken:
+    Type: String
+    Description: Client token for Ghostinspector account
+  BlazemeterClientToken:
+    Type: String
+    Description: Blazemeter client token
+Resources:
+  petclinicpipeline:
+    Type: "AWS::CodePipeline::Pipeline"
+    Properties:
+      Name: spring-petclinic
+      RoleArn: arn:aws:iam::051112295763:role/AWS-CodePipeline-Service
+      ArtifactStore:
+        Type: S3
+        Location: codepipeline-eu-central-1-626666503101
+      Stages:
+        - Name: Source
+          Actions:
+            - OutputArtifacts:
+                - Name: MyApp
+              InputArtifacts: []
+              Name: Source
+              ActionTypeId:
+                Version: '1'
+                Category: Source
+                Owner: ThirdParty
+                Provider: GitHub
+              Configuration:
+                Owner: nralbers
+                Branch: master
+                OAuthToken:
+                  Ref: GithubOauthToken
+                PollForSourceChanges: 'true'
+                Repo: spring-petclinic
+              RunOrder: 1
+        - Name: Build
+          Actions:
+            - OutputArtifacts:
+                - Name: MyAppBuild
+              InputArtifacts:
+                - Name: MyApp
+              Name: CodeBuild
+              ActionTypeId:
+                Version: '1'
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+              Configuration:
+                ProjectName:
+                  Ref: petclinicbuild
+              RunOrder: 1
+        - Name: Staging
+          Actions:
+            - OutputArtifacts: []
+              InputArtifacts:
+                - Name: MyAppBuild
+              Name: springPetclinic-dev
+              ActionTypeId:
+                Version: '1'
+                Category: Deploy
+                Owner: AWS
+                Provider: ElasticBeanstalk
+              Configuration:
+                EnvironmentName:
+                  Ref: petclinicbeanstalkenv
+                ApplicationName:
+                  Ref: petclinicbeanstalkapp
+              runOrder: 1
+        - Name: SmokeTest
+          Actions:
+            - OutputArtifacts: []
+              InputArtifacts: []
+              Name: SmokeTest
+              ActionTypeId:
+                Version: '1'
+                Category: Test
+                Owner: ThirdParty
+                Provider: GhostInspector
+              Configuration:
+                ClientToken:
+                  Ref: GhostInspectorClientToken
+                ClientId: b9b1ea5b-199b-4355-8547-1a16833598ce
+                TestId: 5a8e96b09ef59606f9fc42e2
+              RunOrder: 1
+        - Name: LoadTest
+          Actions:
+            - OutputArtifacts: []
+              InputArtifacts: []
+              Name: Blazemeter
+              ActionTypeId:
+                Version: '1'
+                Category: Test
+                Owner: ThirdParty
+                Provider: BlazeMeter
+              Configuration:
+                ClientToken:
+                  Ref: BlazemeterClientToken
+                ClientId: e4f71835-ee5d-4f2a-b347-0749ef0ff39c
+                TestId: '5947624'
+              RunOrder: 1
+
+
+  petclinicbuild:
+    Type: "AWS::CodeBuild::Project"
+    Properties:
+      badge:
+        badgeEnabled: false
+      environment:
+        image: aws/codebuild/java:openjdk-8
+        type: LINUX_CONTAINER
+        environmentVariables: []
+        privilegedMode: false
+        computeType: BUILD_GENERAL1_SMALL
+      cache:
+        type: NO_CACHE
+      description: Build spring-petclinic using maven
+      encryptionKey: arn:aws:kms:eu-central-1:051112295763:alias/aws/s3
+      artifacts:
+        type: CODEPIPELINE
+        packaging: NONE
+        name: spring-petclinic-build
+      name: spring-petclinic-build
+      timeoutInMinutes: 10
+      source:
+        type: CODEPIPELINE
+        insecureSsl: false
+      tags: []
+      serviceRole: arn:aws:iam::051112295763:role/service-role/code-build-spring-petclinic-build-service-role
+      
+  petclinicbeanstalkapp:
+    Type: "AWS::ElasticBeanstalk::Application"
+    Properties:
+      ApplicationName: spring-petclinic
+
+  petclinicbeanstalkenv:
+    Type: "AWS::ElasticBeanstalk::Environment"
+    Properties:
+      ApplicationName: 
+        Ref: petclinicbeanstalkapp
+      CNAMEPrefix: springPetclinic-dev
+      Description: []
+      EnvironmentName: springPetclinic-dev
+      OptionSettings: 
+        - Namespace: aws:autoscaling:launchconfiguration
+          OptionName: IamInstanceProfile
+          Value: arn:aws:iam::051112295763:instance-profile/aws-elasticbeanstalk-ec2-role
+        - Namespace: aws:elasticbeanstalk:environment
+          OptionName: ServiceRole
+          Value: arn:aws:iam::051112295763:role/aws-elasticbeanstalk-service-role
+      PlatformArn: "arn:aws:elasticbeanstalk:eu-central-1::platform/Tomcat 8 with Java 8 running on 64bit Amazon Linux/2.7.6"
+      Tier:
+        Name: "Webserver"
+        Type: "Standard"
+        Version: "1.0"
